@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Private Space</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="chat-window" class="chat-window"></div>
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+   <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // PASTE YOUR FIREBASE CONFIG HERE (from Step 1)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgvYFXA4kwXSOgInvRdzwgfF48zPHfatA",
+    authDomain: "ourmessenger-2f308.firebaseapp.com",
+     projectId: "ourmessenger-2f308",
+    storageBucket: "ourmessenger-2f308.firebasestorage.app",
+    messagingSenderId: "898949597150",
+    appId: "1:898949597150:web:e97136cf7f6660b43abf4f"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // --- BRAIN LOGIC ---
+  const chatWindow = document.getElementById('chat-window');
+  const input = document.getElementById('message-input');
+  const sendBtn = document.getElementById('send-btn');
+
+  // SEND to Firebase
+  sendBtn.onclick = async () => {
+    if (input.value.trim() !== "") {
+      await addDoc(collection(db, "messages"), {
+        text: input.value,
+        sender: "Me", // Later we can make this dynamic
+        createdAt: new Date()
+      });
+      input.value = "";
+    }
+  };
+
+  // LISTEN for changes in Realtime
+  const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+  onSnapshot(q, (snapshot) => {
+    chatWindow.innerHTML = ""; // Clear window and redraw
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const div = document.createElement('div');
+      div.classList.add('message', data.sender === "Me" ? 'my-message' : 'partner-message');
+      div.innerText = data.text;
+      chatWindow.appendChild(div);
+    });
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  });
+</script>
+</body>
+</html>
