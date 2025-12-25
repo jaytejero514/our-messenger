@@ -1,80 +1,83 @@
-/* 1. The Overall Page Setup */
 body {
-    background-color: #f0f2f5; /* Light grey background */
+    background: #e5ddd5;
+    font-family: sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-/* 2. The App Container (The Phone Shape) */
 .app-container {
-    width: 360px;
-    height: 600px;
+    width: 350px;
+    height: 550px;
     background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 15px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* 3. The Chat Area */
+.header {
+    background: #075e54;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.login-form {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
 .chat-window {
-    flex: 1; /* This takes up all available space */
-    padding: 20px;
+    flex: 1;
+    padding: 15px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space between bubbles */
-    background-color: #e5ddd5; /* Classic chat wallpaper color */
+    gap: 10px;
 }
 
-/* 4. Your Message Bubbles */
+.message {
+    padding: 8px 12px;
+    border-radius: 10px;
+    max-width: 75%;
+    font-size: 14px;
+}
+
 .my-message {
-    background-color: #ffffff; /* Light green */
-    padding: 8px 15px;
-    align-self: flex-end; /* Pushes your messages to the RIGHT */
-    border-radius: 15px 15px 0px 15px;
-    max-width: 80%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    background: #dcf8c6;
+    align-self: flex-end;
 }
 
-/* 5. The Input Area at the Bottom */
+.partner-message {
+    background: white;
+    align-self: flex-start;
+    border: 1px solid #eee;
+}
+
 .input-area {
-    padding: 15px;
+    padding: 10px;
     display: flex;
     background: #f0f0f0;
-    border-top: 1px solid #ddd;
 }
 
-#message-input {
-    flex: 1;
-    padding: 10px 15px;
+#logout-btn {
+    background: rgba(255,255,255,0.2);
     border: none;
-    border-radius: 25px;
-    outline: none;
-}
-
-#send-btn {
-    background: #075e54;
     color: white;
-    border: none;
-    padding: 0 20px;
-    margin-left: 10px;
-    border-radius: 25px;
-    font-weight: bold;
+    border-radius: 5px;
     cursor: pointer;
-
-    .partner-message {
-    background-color: white;
-    padding: 8px 15px;
-    align-self: flex-start; /* Pushes partner messages to the LEFT */
-    border-radius: 15px 15px 15px 0px;
-    max-width: 80%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    color: #ffffff;
-}
 }
