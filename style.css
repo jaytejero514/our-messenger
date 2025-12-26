@@ -144,6 +144,8 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
     white-space: pre-wrap;
+    cursor: pointer;
+    transition: transform 0.1s ease;
     
     /* Makes bubbles look good over photos */
     backdrop-filter: blur(8px);
@@ -213,4 +215,15 @@ input {
 
 .message {
     user-select: text; /* Allows you to copy/paste messages */
+}
+
+.message:active {
+    transform: scale(0.98); /* Slight shrink when clicked */
+}
+#clear-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    margin-right: 10px;
 }

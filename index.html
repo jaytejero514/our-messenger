@@ -34,23 +34,23 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="app-container" style="display: none;">
-        <div class="header">
-            <span>OurMessenger</span>
-            <div>
-                <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                <button id="theme-btn">🖼️</button>
-                <button id="logout-btn">Exit</button>
-            </div>
-        </div>
-        <div id="typing-indicator" style="font-size: 12px; color: gray; height: 15px; padding-left: 20px;"></div>
-        <div id="chat-window" class="chat-window"></div>
-        <div class="input-area">
-            <input type="text" id="message-input" placeholder="Message...">
-            <button id="send-btn">Send</button>
+<div id="chat-screen" class="app-container" style="display: none;">
+    <div class="header">
+        <span>OurMessenger</span>
+        <div>
+            <button id="clear-btn" title="Clear All Messages">🗑️</button> 
+            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            <button id="theme-btn">🖼️</button>
+            <button id="logout-btn">Exit</button>
         </div>
     </div>
-
+    <div id="typing-indicator" style="font-size: 12px; color: gray; height: 15px; padding-left: 20px;"></div>
+    <div id="chat-window" class="chat-window"></div>
+    <div class="input-area">
+        <input type="text" id="message-input" placeholder="Message...">
+        <button id="send-btn">Send</button>
+    </div>
+</div>
     <script type="module">
         // Add this at the top of your script
         if ('serviceWorker' in navigator) {
@@ -62,9 +62,10 @@
 }
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
-            getFirestore, collection, addDoc, onSnapshot, query, orderBy, 
-            serverTimestamp, doc, setDoc, getDocs, where, updateDoc 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, 
+    serverTimestamp, doc, setDoc, getDocs, where, updateDoc,
+    deleteDoc, writeBatch // ADD THESE TWO
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { 
             getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -139,11 +140,19 @@
             const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
             onSnapshot(q, (snapshot) => {
                 chatWindow.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
+                snapshot.forEach((docSnap) => { // renamed to docSnap for clarity
+                    const data = docSnap.data();
                     const isMe = data.sender === auth.currentUser.email;
                     const div = document.createElement('div');
                     div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
+                    
+                    // Add click-to-delete logic
+                    div.onclick = () => {
+                        if(confirm("Delete this message?")) {
+                            deleteDoc(doc(db, "messages", docSnap.id));
+                        }
+                    };
+
                     let seenStatus = (isMe && data.seen) ? '<span style="display:block; font-size:10px; opacity:0.5;">Seen</span>' : '';
                     div.innerHTML = `${data.text} ${seenStatus}`;
                     chatWindow.appendChild(div);
@@ -210,6 +219,21 @@
             };
             reader.readAsDataURL(file);
         };
+
+        document.getElementById('clear-btn').onclick = async () => {
+    if (confirm("This will delete ALL messages for both of you. Are you sure?")) {
+        const q = query(collection(db, "messages"));
+        const querySnapshot = await getDocs(q);
+        
+        const batch = writeBatch(db);
+        querySnapshot.forEach((docSnap) => {
+            batch.delete(docSnap.ref);
+        });
+
+        await batch.commit();
+        alert("Chat cleared!");
+    }
+};
     </script>
 </body>
 </html>
