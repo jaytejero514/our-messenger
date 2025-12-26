@@ -31,11 +31,17 @@
     </div>
 
     <script type="module">
+        // 1. ALL IMPORTS IN ONE PLACE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, query, orderBy, 
+            serverTimestamp, doc, setDoc, getDocs, where, updateDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // REPLACE THIS WITH YOUR CONFIG
+        // 2. YOUR FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBgvYFXA4kwXSOgInvRdzwgfF48zPHfatA",
             authDomain: "ourmessenger-2f308.firebaseapp.com",
@@ -49,18 +55,22 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Elements
+        // UI Elements
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
         const chatWindow = document.getElementById('chat-window');
         const input = document.getElementById('message-input');
+        const typingIndicator = document.getElementById('typing-indicator');
 
-        // --- AUTH LOGIC ---
+        // --- LOGIN LOGIC ---
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            try { await signInWithEmailAndPassword(auth, email, pass); } 
-            catch (e) { alert("Login failed!"); }
+            try { 
+                await signInWithEmailAndPassword(auth, email, pass); 
+            } catch (e) { 
+                alert("Login failed! Check email/password."); 
+            }
         };
 
         document.getElementById('logout-btn').onclick = () => signOut(auth);
@@ -70,87 +80,91 @@
                 loginScreen.style.display = 'none';
                 chatScreen.style.display = 'flex';
                 loadMessages();
+                setupTypingListener();
             } else {
                 loginScreen.style.display = 'flex';
                 chatScreen.style.display = 'none';
             }
         });
 
+        // --- SEEN LOGIC ---
+        async function markMessagesAsSeen() {
+            if (!auth.currentUser) return;
+            const q = query(
+                collection(db, "messages"), 
+                where("sender", "!=", auth.currentUser.email), 
+                where("seen", "==", false)
+            );
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (document) => {
+                await updateDoc(doc(db, "messages", document.id), { seen: true });
+            });
+        }
+
         // --- CHAT LOGIC ---
         document.getElementById('send-btn').onclick = sendMessage;
         input.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
-    async function sendMessage() {
-        if (input.value.trim() !== "") {
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (text !== "") {
+                await addDoc(collection(db, "messages"), {
+                    text: text,
+                    sender: auth.currentUser.email,
+                    createdAt: serverTimestamp(),
+                    seen: false
+                });
 
-            await addDoc(collection(db, "messages"), {
-                text: input.value,
-                sender: auth.currentUser.email,
-                createdAt: serverTimestamp(),
-                seen: false
-            });
+                // Reset typing status
+                await setDoc(doc(db, "status", auth.currentUser.uid), {
+                    isTyping: false,
+                    email: auth.currentUser.email
+                });
 
-        // 🔽 ADD THIS RIGHT HERE (reset typing status after sending)
-        await setDoc(doc(db, "status", auth.currentUser.uid), {
-            isTyping: false,
-            email: auth.currentUser.email
-        });
-
-        input.value = "";
-    }
-}
+                input.value = "";
+            }
+        }
 
         function loadMessages() {
             const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
             onSnapshot(q, (snapshot) => {
                 chatWindow.innerHTML = "";
-            snapshot.forEach((doc) => {
-            const data = doc.data();
-            const isMe = data.sender === auth.currentUser.email;
-            
-            const div = document.createElement('div');
-            div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
-            
-            // Add the text + a tiny "Seen" label if it's your message and it's been read
-            let seenStatus = (isMe && data.seen) ? '<span style="display:block; font-size:10px; opacity:0.5;">Seen</span>' : '';
-            div.innerHTML = `${data.text} ${seenStatus}`;
-            
-            chatWindow.appendChild(div);
-        });
-
-            // Trigger the "Mark as Seen" function whenever new messages arrive
-            markMessagesAsSeen();
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const isMe = data.sender === auth.currentUser.email;
+                    const div = document.createElement('div');
+                    div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
+                    
+                    let seenStatus = (isMe && data.seen) ? '<span style="display:block; font-size:10px; opacity:0.5;">Seen</span>' : '';
+                    div.innerHTML = `${data.text} ${seenStatus}`;
+                    
+                    chatWindow.appendChild(div);
+                });
                 chatWindow.scrollTop = chatWindow.scrollHeight;
+                markMessagesAsSeen();
             });
         }
 
-        import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const typingIndicator = document.getElementById('typing-indicator');
-
-        // 1. TELL THE DATABASE YOU ARE TYPING
+        // --- TYPING LOGIC ---
         input.addEventListener('input', () => {
-            // We create a special document in a "status" collection for each user
-            setDoc(doc(db, "status", auth.currentUser.uid), {
-                isTyping: input.value.length > 0,
-                email: auth.currentUser.email
-            });
+            if (auth.currentUser) {
+                setDoc(doc(db, "status", auth.currentUser.uid), {
+                    isTyping: input.value.length > 0,
+                    email: auth.currentUser.email
+                });
+            }
         });
 
-        // 2. LISTEN FOR YOUR PARTNER TYPING
-        onSnapshot(collection(db, "status"), (snapshot) => {
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                // If it's not me and they ARE typing
-                if (data.email !== auth.currentUser.email && data.isTyping) {
-                    typingIndicator.innerText = "Partner is typing...";
-                } else if (data.email !== auth.currentUser.email && !data.isTyping) {
-                    typingIndicator.innerText = "";
-                }
+        function setupTypingListener() {
+            onSnapshot(collection(db, "status"), (snapshot) => {
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.email !== auth.currentUser.email) {
+                        typingIndicator.innerText = data.isTyping ? "Partner is typing..." : "";
+                    }
+                });
             });
-        });
-
-    
+        }
     </script>
 </body>
 </html>
