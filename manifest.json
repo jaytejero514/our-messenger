@@ -1,7 +1,9 @@
 {
   "name": "Our Private Messenger",
   "short_name": "OurMessenger",
-  "start_url": "index.html",
+  "start_url": "./index.html",
+  "id": "/OurMessenger/",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0084ff",
@@ -9,7 +11,8 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/5962/5962463.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
