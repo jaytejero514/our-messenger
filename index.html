@@ -5,22 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Private Space</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OurMessenger">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0084ff">
 </head>
 <body>
 
     <div id="login-screen" class="app-container">
-        <div class="header"><h1>Welcome ❤️</h1></div>
-        <div class="login-form">
-            <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-pass" placeholder="Password">
-            <button id="login-btn">Enter</button>
+        <div class="login-container">
+            <div class="login-header">
+                <h1 class="login-title">OurMessenger</h1>
+                <div class="login-icon">❤️</div>
+                <p class="login-subtitle">A private space just for us.</p>
+            </div>
+            
+            <div class="login-form">
+                <input type="email" id="login-email" placeholder="Email address">
+                <input type="password" id="login-pass" placeholder="Password">
+                <button id="login-btn">Log In</button>
+            </div>
+            
+            <div class="login-footer">
+                <span>Locked & Private</span>
+            </div>
         </div>
     </div>
 
     <div id="chat-screen" class="app-container" style="display: none;">
         <div class="header">
-            <span>Our Chat</span>
-            <button id="logout-btn">Exit</button>
+            <span>OurMessenger</span>
+            <div>
+                <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                <button id="theme-btn">🖼️</button>
+                <button id="logout-btn">Exit</button>
+            </div>
         </div>
         <div id="typing-indicator" style="font-size: 12px; color: gray; height: 15px; padding-left: 20px;"></div>
         <div id="chat-window" class="chat-window"></div>
@@ -31,7 +52,6 @@
     </div>
 
     <script type="module">
-        // 1. ALL IMPORTS IN ONE PLACE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, onSnapshot, query, orderBy, 
@@ -41,7 +61,6 @@
             getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // 2. YOUR FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBgvYFXA4kwXSOgInvRdzwgfF48zPHfatA",
             authDomain: "ourmessenger-2f308.firebaseapp.com",
@@ -55,21 +74,20 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // UI Elements
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
         const chatWindow = document.getElementById('chat-window');
         const input = document.getElementById('message-input');
         const typingIndicator = document.getElementById('typing-indicator');
 
-        // --- LOGIN LOGIC ---
+        // --- LOGIN ---
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
             try { 
                 await signInWithEmailAndPassword(auth, email, pass); 
             } catch (e) { 
-                alert("Login failed! Check email/password."); 
+                alert("Login failed!"); 
             }
         };
 
@@ -87,21 +105,14 @@
             }
         });
 
-        // --- SEEN LOGIC ---
+        // --- CHAT LOGIC ---
         async function markMessagesAsSeen() {
             if (!auth.currentUser) return;
-            const q = query(
-                collection(db, "messages"), 
-                where("sender", "!=", auth.currentUser.email), 
-                where("seen", "==", false)
-            );
+            const q = query(collection(db, "messages"), where("sender", "!=", auth.currentUser.email), where("seen", "==", false));
             const querySnapshot = await getDocs(q);
-            querySnapshot.forEach(async (document) => {
-                await updateDoc(doc(db, "messages", document.id), { seen: true });
-            });
+            querySnapshot.forEach(async (d) => { await updateDoc(doc(db, "messages", d.id), { seen: true }); });
         }
 
-        // --- CHAT LOGIC ---
         document.getElementById('send-btn').onclick = sendMessage;
         input.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
@@ -109,18 +120,9 @@
             const text = input.value.trim();
             if (text !== "") {
                 await addDoc(collection(db, "messages"), {
-                    text: text,
-                    sender: auth.currentUser.email,
-                    createdAt: serverTimestamp(),
-                    seen: false
+                    text: text, sender: auth.currentUser.email, createdAt: serverTimestamp(), seen: false
                 });
-
-                // Reset typing status
-                await setDoc(doc(db, "status", auth.currentUser.uid), {
-                    isTyping: false,
-                    email: auth.currentUser.email
-                });
-
+                await setDoc(doc(db, "status", auth.currentUser.uid), { isTyping: false, email: auth.currentUser.email });
                 input.value = "";
             }
         }
@@ -134,10 +136,8 @@
                     const isMe = data.sender === auth.currentUser.email;
                     const div = document.createElement('div');
                     div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
-                    
                     let seenStatus = (isMe && data.seen) ? '<span style="display:block; font-size:10px; opacity:0.5;">Seen</span>' : '';
                     div.innerHTML = `${data.text} ${seenStatus}`;
-                    
                     chatWindow.appendChild(div);
                 });
                 chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -145,13 +145,10 @@
             });
         }
 
-        // --- TYPING LOGIC ---
+        // --- TYPING ---
         input.addEventListener('input', () => {
             if (auth.currentUser) {
-                setDoc(doc(db, "status", auth.currentUser.uid), {
-                    isTyping: input.value.length > 0,
-                    email: auth.currentUser.email
-                });
+                setDoc(doc(db, "status", auth.currentUser.uid), { isTyping: input.value.length > 0, email: auth.currentUser.email });
             }
         });
 
@@ -165,6 +162,46 @@
                 });
             });
         }
+
+        // --- PHOTO THEME LOGIC (BASE64) ---
+        const themeBtn = document.getElementById('theme-btn');
+        const fileInput = document.getElementById('image-upload');
+
+        // Listen for cloud changes
+        onSnapshot(doc(db, "settings", "wallpaper"), (docSnap) => {
+            if (docSnap.exists()) {
+                const imageUrl = docSnap.data().backgroundUrl;
+                chatWindow.style.backgroundImage = `url('${imageUrl}')`;
+            }
+        });
+
+        // Trigger file picker
+        themeBtn.onclick = () => fileInput.click();
+
+        // Convert image to Base64 and save to Firestore
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Firestore document limit is 1MB
+            if (file.size > 800000) { 
+                alert("File too large. Please choose a photo smaller than 800KB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64String = event.target.result;
+                try {
+                    await setDoc(doc(db, "settings", "wallpaper"), {
+                        backgroundUrl: base64String
+                    });
+                } catch (error) {
+                    console.error("Theme save failed:", error);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
     </script>
 </body>
 </html>

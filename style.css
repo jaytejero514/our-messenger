@@ -1,6 +1,16 @@
+/* --- CSS VARIABLES --- */
+:root {
+    --messenger-blue: #0084ff;
+    --messenger-gray: #e4e6eb;
+    --bg-white: #ffffff;
+    --text-primary: #050505;
+    --input-bg: #f0f2f5;
+}
+
+/* --- MAIN LAYOUT --- */
 body {
-    background: #e5ddd5;
-    font-family: sans-serif;
+    background: #f0f2f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -9,36 +19,103 @@ body {
 }
 
 .app-container {
-    width: 350px;
-    height: 550px;
-    background: white;
-    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    height: 100vh;
+    max-height: 800px;
+    background: var(--bg-white);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    position: relative;
 }
 
-.header {
-    background: #075e54;
-    color: white;
-    padding: 15px;
+/* --- LOGIN SCREEN --- */
+#login-screen {
+    background: #f0f2f5;
+    justify-content: center;
+    align-items: center;
     display: flex;
-    justify-content: space-between;
+}
+
+.login-container {
+    width: 85%;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
 }
 
-.login-form {
-    padding: 40px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.login-header {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-input {
+.login-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--messenger-blue);
+    margin: 0;
+}
+
+.login-icon {
+    font-size: 40px;
+    margin: 10px 0;
+}
+
+.login-form {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    flex: none;
+}
+
+.login-form input {
+    background: var(--input-bg);
+    border: 1px solid #dddfe2;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
+
+#login-btn {
+    background: var(--messenger-blue);
+    color: white;
+    border: none;
     padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* --- CHAT AREA & WALLPAPER --- */
+.header {
+    background: var(--bg-white);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    font-weight: 700;
+    z-index: 10;
+}
+
+#logout-btn, #theme-btn {
+    background: none; border: none;
+    color: var(--messenger-blue);
+    font-weight: 600; cursor: pointer;
+    font-size: 15px;
 }
 
 .chat-window {
@@ -47,59 +124,89 @@ input {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    background-color: white; /* Default color */
+    
+    /* WALLPAPER SETTINGS */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease;
 }
 
+/* --- GLASS BUBBLES --- */
 .message {
-    padding: 8px 12px;
-    border-radius: 10px;
+    padding: 10px 16px;
+    border-radius: 20px;
     max-width: 75%;
-    font-size: 14px;
+    font-size: 15px;
+    margin-bottom: 4px;
+    position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    
+    /* Makes bubbles look good over photos */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .my-message {
-    background: #dcf8c6;
+    background: rgba(0, 132, 255, 0.85); /* 85% transparent blue */
+    color: white;
     align-self: flex-end;
+    border-bottom-right-radius: 4px;
 }
 
 .partner-message {
-    background: white;
+    background: rgba(228, 230, 235, 0.85); /* 85% transparent gray */
+    color: var(--text-primary);
     align-self: flex-start;
-    border: 1px solid #eee;
+    border-bottom-left-radius: 4px;
 }
 
+/* --- INPUT AREA --- */
 .input-area {
-    padding: 10px;
+    padding: 10px 15px;
+    background: white;
     display: flex;
-    background: #f0f0f0;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #eee;
+    z-index: 10;
 }
 
-#logout-btn {
-    background: rgba(255,255,255,0.2);
+.input-area input {
+    flex: 1;
+    background: var(--input-bg);
+    border-radius: 20px;
+    padding: 10px 15px;
     border: none;
-    color: white;
-    border-radius: 5px;
+    outline: none;
+}
+
+#send-btn {
+    color: var(--messenger-blue);
+    font-weight: 700;
     cursor: pointer;
+    background: none;
+    border: none;
 }
 
-/* Keeps the 'Seen' text aligned to the right inside your bubble */
-.my-message span {
-    text-align: right;
-    width: 100%;
-    margin-top: 4px;
+@media (max-width: 500px) {
+    .app-container { max-width: none; height: 100%; border-radius: 0; }
 }
 
-/* Ensure the typing indicator is visible against the background */
-#typing-indicator {
-    background: rgba(255, 255, 255, 0.5);
-    font-style: italic;
-    font-weight: bold;
+body {
+    /* Prevents that annoying blue highlight when you tap buttons */
+    -webkit-tap-highlight-color: transparent;
+    /* Prevents users from selecting text like a website */
+    user-select: none;
+    /* Stops the "pull-to-refresh" bounce on mobile */
+    overscroll-behavior-y: contain;
 }
 
-#typing-indicator {
-    font-style: italic;
-    font-size: 11px;
-    color: #075e54; /* Match the header color */
-    margin-bottom: 5px;
-    transition: all 0.3s ease; /* Smooth fade in/out */
+input {
+    /* Allow text selection only in inputs so you can still edit messages */
+    user-select: text;
 }
