@@ -22,6 +22,7 @@
             <span>Our Chat</span>
             <button id="logout-btn">Exit</button>
         </div>
+        <div id="typing-indicator" style="font-size: 12px; color: gray; height: 15px; padding-left: 20px;"></div>
         <div id="chat-window" class="chat-window"></div>
         <div class="input-area">
             <input type="text" id="message-input" placeholder="Message...">
@@ -79,32 +80,77 @@
         document.getElementById('send-btn').onclick = sendMessage;
         input.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
-        async function sendMessage() {
-            if (input.value.trim() !== "") {
-                await addDoc(collection(db, "messages"), {
-                    text: input.value,
-                    sender: auth.currentUser.email,
-                    createdAt: serverTimestamp()
-                });
-                input.value = "";
-            }
-        }
+    async function sendMessage() {
+        if (input.value.trim() !== "") {
+
+            await addDoc(collection(db, "messages"), {
+                text: input.value,
+                sender: auth.currentUser.email,
+                createdAt: serverTimestamp(),
+                seen: false
+            });
+
+        // 🔽 ADD THIS RIGHT HERE (reset typing status after sending)
+        await setDoc(doc(db, "status", auth.currentUser.uid), {
+            isTyping: false,
+            email: auth.currentUser.email
+        });
+
+        input.value = "";
+    }
+}
 
         function loadMessages() {
             const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
             onSnapshot(q, (snapshot) => {
                 chatWindow.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const isMe = data.sender === auth.currentUser.email;
-                    const div = document.createElement('div');
-                    div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
-                    div.innerText = data.text;
-                    chatWindow.appendChild(div);
-                });
+            snapshot.forEach((doc) => {
+            const data = doc.data();
+            const isMe = data.sender === auth.currentUser.email;
+            
+            const div = document.createElement('div');
+            div.className = `message ${isMe ? 'my-message' : 'partner-message'}`;
+            
+            // Add the text + a tiny "Seen" label if it's your message and it's been read
+            let seenStatus = (isMe && data.seen) ? '<span style="display:block; font-size:10px; opacity:0.5;">Seen</span>' : '';
+            div.innerHTML = `${data.text} ${seenStatus}`;
+            
+            chatWindow.appendChild(div);
+        });
+
+            // Trigger the "Mark as Seen" function whenever new messages arrive
+            markMessagesAsSeen();
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             });
         }
+
+        import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // 1. TELL THE DATABASE YOU ARE TYPING
+        input.addEventListener('input', () => {
+            // We create a special document in a "status" collection for each user
+            setDoc(doc(db, "status", auth.currentUser.uid), {
+                isTyping: input.value.length > 0,
+                email: auth.currentUser.email
+            });
+        });
+
+        // 2. LISTEN FOR YOUR PARTNER TYPING
+        onSnapshot(collection(db, "status"), (snapshot) => {
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                // If it's not me and they ARE typing
+                if (data.email !== auth.currentUser.email && data.isTyping) {
+                    typingIndicator.innerText = "Partner is typing...";
+                } else if (data.email !== auth.currentUser.email && !data.isTyping) {
+                    typingIndicator.innerText = "";
+                }
+            });
+        });
+
+    
     </script>
 </body>
 </html>
