@@ -210,3 +210,7 @@ input {
     /* Allow text selection only in inputs so you can still edit messages */
     user-select: text;
 }
+
+.message {
+    user-select: text; /* Allows you to copy/paste messages */
+}
