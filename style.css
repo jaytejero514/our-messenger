@@ -81,3 +81,25 @@ input {
     border-radius: 5px;
     cursor: pointer;
 }
+
+/* Keeps the 'Seen' text aligned to the right inside your bubble */
+.my-message span {
+    text-align: right;
+    width: 100%;
+    margin-top: 4px;
+}
+
+/* Ensure the typing indicator is visible against the background */
+#typing-indicator {
+    background: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-weight: bold;
+}
+
+#typing-indicator {
+    font-style: italic;
+    font-size: 11px;
+    color: #075e54; /* Match the header color */
+    margin-bottom: 5px;
+    transition: all 0.3s ease; /* Smooth fade in/out */
+}
